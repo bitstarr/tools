@@ -27,7 +27,7 @@ Configure your markup depending on the system to include something like this:
 | env | Enviroment | `dev`, `stage`, `preview` | `dev` |
 | letter | Letter to show | string | First letter of URL |
 
-## frame.php
+## frame.html
 
 ![](preview/frame.png)
 
