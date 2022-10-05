@@ -68,7 +68,7 @@ input[type='text'][readonly] {
     grid-area: example;
     font-size: clamp(
         var( --fmin, 2rem ),
-        1rem + var( --fdyn, 4.21vw ),
+        var( --slope, 2.96vw ) + var( --intercept, 1.41rem ),
         var( --fmax, 4rem) );
 }
 
@@ -98,11 +98,6 @@ input[type='text'][readonly] {
                 <input type="text" name="fs-min" id="fs-min" value="2" />
                 <span class="suffix">rem</span>
             </p>
-            <p class="line input">
-                <label for="fs-min-calc">Equal to</label>
-                <input type="text" name="fs-min-calc" id="fs-min-calc" readonly value="" />
-                <span class="suffix">vw</span>
-            </p>
         </fieldset>
         <fieldset>
             <legend>Maximum</legend>
@@ -115,11 +110,6 @@ input[type='text'][readonly] {
                 <label for="fs-max">Font Size</label>
                 <input type="text" name="fs-max" id="fs-max" value="4" />
                 <span class="suffix">rem</span>
-            </p>
-            <p class="line input">
-                <label for="fs-max-calc">Equal to</label>
-                <input type="text" name="fs-max-calc" id="fs-max-calc" readonly value="" />
-                <span class="suffix">vw</span>
             </p>
         </fieldset>
         <fieldset>
@@ -136,7 +126,7 @@ input[type='text'][readonly] {
 <pre>
 @media (min-width: <span id="code-vp-min"></span>rem) and (max-width: <span id="code-vp-max"></span>rem) {
     .text {
-        font-size: clamp( <span id="code-fs-min"></span>rem, <span id="code-calc"></span>vw, <span id="code-fs-max"></span>rem );
+        font-size: clamp( <span id="code-fs-min"></span>rem, <span id="code-calc"></span>, <span id="code-fs-max"></span>rem );
     }
 }
 </pre>
@@ -152,8 +142,6 @@ input[type='text'][readonly] {
     var clamper = {
         form: document.forms[0],
         data: {},
-        min: document.querySelector( '#fs-min-calc' ),
-        max: document.querySelector( '#fs-max-calc' ),
         code: {
             fs_min: document.querySelector( '#code-fs-min' ),
             fs_max: document.querySelector( '#code-fs-max' ),
@@ -173,34 +161,28 @@ input[type='text'][readonly] {
         },
 
         run: function() {
-            /*
-            viewport 20em = 320px (1vw = 3.2px)
-            fontsize 2rem = 32px
-            32 / 3.2 = 10vw
-            */
-            let self = window.clamper,
-                vp_min = ( self.data['vp-min'] * self.data['fs-base'] / 100 ),
-                fs_min = ( self.data['fs-min'] * self.data['fs-base'] ),
-                min    = ( fs_min - self.data['fs-base'] ) / vp_min,
-                vp_max = ( self.data['vp-max'] * self.data['fs-base'] / 100 ),
-                fs_max = ( self.data['fs-max'] * self.data['fs-base'] ),
-                max    = ( fs_max - self.data['fs-base'] ) / vp_max,
-                dyn    = ( ( min + max ) / 2 ).toFixed( 2 );
 
-            console.log( fs_min / vp_min, fs_max / vp_max, min, max );
-            self.min.value = min.toFixed( 2 );
-            self.max.value = max.toFixed( 2 );
+            let self = window.clamper,
+                slope = ( self.data['fs-max'] - self.data['fs-min'] ) / ( self.data['vp-max'] - self.data['vp-min'] ),
+                intercept = ( self.data['fs-min'] - slope * self.data['vp-min'] ),
+                slopeUnit = ( slope * 100 ).toFixed( 2 ) + 'vw',
+                interceptUnit = intercept.toFixed( 2 ) + 'rem';
 
             self.code.fs_min.innerHTML = self.data['fs-min'];
             self.code.fs_max.innerHTML = self.data['fs-max'];
             self.code.vp_min.innerHTML = self.data['vp-min'];
             self.code.vp_max.innerHTML = self.data['vp-max'];
-            // self.code.calc.innerHTML = ( ( min + max ) / 2 ).toFixed( 2 );
-            self.code.calc.innerHTML = '1rem + ' + dyn;
+            self.code.calc.innerHTML = slopeUnit + ' + ' + interceptUnit;
 
             self.example.style.setProperty( '--fmin', self.data['fs-min'] + 'rem' );
-            self.example.style.setProperty( '--fdyn', dyn + 'vw' );
             self.example.style.setProperty( '--fmax', self.data['fs-max'] + 'rem' );
+            self.example.style.setProperty( '--slope', ( slope * 100 ).toFixed( 2 ) + 'vw' );
+            self.example.style.setProperty( '--intercept', intercept.toFixed( 2 ) + 'rem' );
+
+            /*
+            console.log( 'calc', slope, intercept, self.data );
+            console.log( 'clamp', self.data['fs-min'], slopeUnit, interceptUnit, self.data['fs-max']  )
+            */
         }
     };
 
